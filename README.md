@@ -139,6 +139,199 @@ combined_avg_speed <- combined_avg_speed %>%
   ) %>%
   ungroup()
   ```
+## Data analysis 
 
+**1. Creating functions for summary statistics**
+```r 
+summarize_data <- function(data) {
+  data %>%
+    summarize(
+      mean_download = mean(download_speed_reported_mbps, na.rm = TRUE),
+      median_download = median(download_speed_reported_mbps, na.rm = TRUE),
+      sd_download = sd(download_speed_reported_mbps, na.rm = TRUE),
+      mean_upload = mean(upload_speed_reported_mbps, na.rm = TRUE),
+      median_upload = median(upload_speed_reported_mbps, na.rm = TRUE),
+      sd_upload = sd(upload_speed_reported_mbps, na.rm = TRUE)
+    )
+}
 
+summer_wireless_summary <- all_data %>% filter(season == "Summer", type == "Wireless") %>% summarize_data()
+spring_wireless_summary <- all_data %>% filter(season == "Spring", type == "Wireless") %>% summarize_data()
+spring_wired_summary <- all_data %>% filter(season == "Spring", type == "Wired") %>% summarize_data()
+```
 
+**2. Error Bar plots**
+```r
+plot_speeds_bar <- function(data, season, test_type) {
+  # Calculate mean and standard deviation for download and upload speeds
+  summary_data <- data %>%
+    pivot_longer(cols = c(download_speed_reported_mbps, upload_speed_reported_mbps),
+                 names_to = "SpeedType",
+                 values_to = "Speed") %>%
+    group_by(SpeedType) %>%
+    summarize(
+      MeanSpeed = mean(Speed, na.rm = TRUE),
+      SDSpeed = sd(Speed, na.rm = TRUE)
+    )
+  
+  ggplot(summary_data, aes(x = SpeedType, y = MeanSpeed, fill = SpeedType)) +
+    geom_bar(stat = "identity", width = 0.5, position = position_dodge(0.7)) +
+    geom_errorbar(aes(ymin = MeanSpeed - SDSpeed, ymax = MeanSpeed + SDSpeed),
+                  width = 0.2, position = position_dodge(0.7)) +
+    scale_x_discrete(labels = c("download_speed_reported_mbps" = "Download Speed", "upload_speed_reported_mbps" = "Upload Speed")) +
+    labs(
+      title = paste(season, test_type, "Average Speeds with Error Bars"),
+      x = "",
+      y = "Speed (Mbps)"
+    ) +
+    scale_fill_manual(values = c("download_speed_reported_mbps" = "blue", "upload_speed_reported_mbps" = "green")) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+```
+
+**3. Time Plot pivot table**
+```r
+plot_speeds_by_hour <- function(data, selected_season) {
+  # Filter and aggregate the data based on the selected season
+  filtered_data <- data %>%
+    filter(season == selected_season, type == "Wireless") %>%
+    group_by(hour) %>%
+    summarize(
+      median_download_speed = median(download_speed_reported_mbps, na.rm = TRUE),
+      median_upload_speed = median(upload_speed_reported_mbps, na.rm = TRUE),
+      sd_download_speed = sd(download_speed_reported_mbps, na.rm = TRUE),
+      sd_upload_speed = sd(upload_speed_reported_mbps, na.rm = TRUE)
+    ) %>%
+    pivot_longer(cols = c(median_download_speed, median_upload_speed), 
+                 names_to = "SpeedType", 
+                 values_to = "MedianSpeed") %>%
+    pivot_longer(cols = c(sd_download_speed, sd_upload_speed),
+                 names_to = "ErrorType",
+                 values_to = "Error") %>%
+    filter((SpeedType == "median_download_speed" & ErrorType == "sd_download_speed") |
+             (SpeedType == "median_upload_speed" & ErrorType == "sd_upload_speed")) %>%
+    mutate(hour = factor(hour, levels = c("8-10am", "10-12pm", "12-2pm", "2-4:30pm"))) %>%
+    ungroup()
+```
+**3. Floor comparison pivot table and functions**
+```r
+plot_download_basement_comparison <- function(data, stress_data) {
+  # Filter data for the basement
+  stress_basement <- stress_data %>%
+    filter(room_category == "Basement") %>%
+    filter(download_speed_reported_mbps <= 500) %>%
+    mutate(Category = "Stress Test - Basement")
+  
+  summer_basement <- data %>%
+    filter(room_category == "Basement", season == "Summer", type == "Wireless") %>%
+    mutate(Category = "Summer Wireless - Basement")
+  
+  spring_basement <- data %>%
+    filter(room_category == "Basement", season == "Spring", type == "Wireless") %>%
+    mutate(Category = "Spring Wireless - Basement")
+  
+  combined_data <- bind_rows(stress_basement, summer_basement, spring_basement)
+  
+  ggplot(combined_data, aes(x = Category, y = download_speed_reported_mbps, fill = Category)) +
+    geom_boxplot() +
+    labs(
+      title = "Download Speed Basement Comparison",
+      x = "Category",
+      y = "Download Speed (Mbps)"
+    ) +
+    scale_fill_manual(values = c("Stress Test - Basement" = "orange", "Summer Wireless - Basement" = "blue", "Spring Wireless - Basement" = "blue")) +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+
+# Function to plot upload speeds as box plots for basement comparison
+plot_upload_basement_comparison <- function(data, stress_data) {
+  # Filter data for the basement
+  stress_basement <- stress_data %>%
+    filter(room_category == "Basement") %>%
+    filter(upload_speed_reported_mbps <= 500) %>%
+    mutate(Category = "Stress Test - Basement")
+  
+  summer_basement <- data %>%
+    filter(room_category == "Basement", season == "Summer", type == "Wireless") %>%
+    mutate(Category = "Summer Wireless - Basement")
+  
+  spring_basement <- data %>%
+    filter(room_category == "Basement", season == "Spring", type == "Wireless") %>%
+    mutate(Category = "Spring Wireless - Basement")
+  
+  combined_data <- bind_rows(stress_basement, summer_basement, spring_basement)
+  
+  ggplot(combined_data, aes(x = Category, y = upload_speed_reported_mbps, fill = Category)) +
+    geom_boxplot() +
+    labs(
+      title = "Upload Speed Basement Comparison",
+      x = "Category",
+      y = "Upload Speed (Mbps)"
+    ) +
+    scale_fill_manual(values = c("Stress Test - Basement" = "orange", "Summer Wireless - Basement" = "green", "Spring Wireless - Basement" = "green")) +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+
+# Function to plot download speeds as box plots for third floor comparison
+plot_download_third_floor_comparison <- function(data, stress_data) {
+  # Filter data for the third floor
+  stress_third_floor <- stress_data %>%
+    filter(room_category == "Third Floor") %>%
+    filter(download_speed_reported_mbps <= 500) %>%
+    mutate(Category = "Stress Test - Third Floor")
+  
+  summer_third_floor <- data %>%
+    filter(room_category == "Third Floor", season == "Summer", type == "Wireless") %>%
+    mutate(Category = "Summer Wireless - Third Floor")
+  
+  spring_third_floor <- data %>%
+    filter(room_category == "Third Floor", season == "Spring", type == "Wireless") %>%
+    mutate(Category = "Spring Wireless - Third Floor")
+  
+  combined_data <- bind_rows(stress_third_floor, summer_third_floor, spring_third_floor)
+  
+  ggplot(combined_data, aes(x = Category, y = download_speed_reported_mbps, fill = Category)) +
+    geom_boxplot() +
+    labs(
+      title = "Download Speed Third Floor Comparison",
+      x = "Category",
+      y = "Download Speed (Mbps)"
+    ) +
+    scale_fill_manual(values = c("Stress Test - Third Floor" = "orange", "Summer Wireless - Third Floor" = "blue", "Spring Wireless - Third Floor" = "blue")) +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+
+# Function to plot upload speeds as box plots for third floor comparison
+plot_upload_third_floor_comparison <- function(data, stress_data) {
+  # Filter data for the third floor
+  stress_third_floor <- stress_data %>%
+    filter(room_category == "Third Floor") %>%
+    filter(upload_speed_reported_mbps <= 500) %>%
+    mutate(Category = "Stress Test - Third Floor")
+  
+  summer_third_floor <- data %>%
+    filter(room_category == "Third Floor", season == "Summer", type == "Wireless") %>%
+    mutate(Category = "Summer Wireless - Third Floor")
+  
+  spring_third_floor <- data %>%
+    filter(room_category == "Third Floor", season == "Spring", type == "Wireless") %>%
+    mutate(Category = "Spring Wireless - Third Floor")
+  
+  combined_data <- bind_rows(stress_third_floor, summer_third_floor, spring_third_floor)
+  
+  ggplot(combined_data, aes(x = Category, y = upload_speed_reported_mbps, fill = Category)) +
+    geom_boxplot() +
+    labs(
+      title = "Upload Speed Third Floor Comparison",
+      x = "Category",
+      y = "Upload Speed (Mbps)"
+    ) +
+    scale_fill_manual(values = c("Stress Test - Third Floor" = "orange", "Summer Wireless - Third Floor" = "green", "Spring Wireless - Third Floor" = "green")) +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+```
