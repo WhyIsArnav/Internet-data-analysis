@@ -2,10 +2,6 @@
 
 ### Author: Arnav Shrestha
 
-<div>
-<img src="Images/InternetSpeedAnalysis.png" width="450">
-</div>
-
 ## Overview:
 This Shiny dashboard project analyzes internet speed data across various room categories and different seasons (Spring and Summer). The dashboard provides a comprehensive view of median wireless download and upload speeds by hour, along with slow speed analyses for both seasons. It also offers summary statistics and data visualizations to help understand trends in internet speed performance.
 
