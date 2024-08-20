@@ -1,4 +1,4 @@
-# INTERNET SPEED ANALYSIS DASHBOARD
+# INTERNET SPEED ANALYSIS (Shiny App)
 
 ### Author: Arnav Shrestha
 
