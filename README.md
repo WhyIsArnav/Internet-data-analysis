@@ -5,8 +5,8 @@
 ## Overview
 This Shiny dashboard project is part of a summer-long data visualization initiative aimed at analyzing internet speed data across various room categories and seasons (Spring and Summer). The dashboard provides a comprehensive view of median wireless download and upload speeds by hour, along with analyses of slow speeds for both seasons. It also offers summary statistics and visualizations to help identify and understand trends in internet speed performance.
 
-##Link 
-https://whyisarnav.shinyapps.io/Internet-Analysis-ITS/
+## Link 
+The full link to my application can be found here: https://whyisarnav.shinyapps.io/Internet-Analysis-ITS/
 
 ## Directory 📖
 The columns that were used are: 
@@ -338,3 +338,5 @@ plot_upload_third_floor_comparison <- function(data, stress_data) {
     theme(legend.position = "none")
 }
 ```
+## Outcome
+I have developed a comprehensive set of metrics for comparing, contrasting, and analyzing wireless internet speeds across different floors and seasons. These metrics provide a detailed understanding of network performance, highlighting areas of strength and potential improvement. As new data is collected during busy seasons, the app will be updated to better assess whether the recent AP (Access Point) installations effectively distribute the connectivity load and contribute to a more stable and improved connection.
