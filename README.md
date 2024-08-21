@@ -1,9 +1,12 @@
-# INTERNET SPEED ANALYSIS (Shiny App)
+# INTERNET ANALYSIS (Shiny App)
 
 ### Author: Arnav Shrestha
 
 ## Overview
 This Shiny dashboard project is part of a summer-long data visualization initiative aimed at analyzing internet speed data across various room categories and seasons (Spring and Summer). The dashboard provides a comprehensive view of median wireless download and upload speeds by hour, along with analyses of slow speeds for both seasons. It also offers summary statistics and visualizations to help identify and understand trends in internet speed performance.
+
+##Link 
+https://whyisarnav.shinyapps.io/Internet-Analysis-ITS/
 
 ## Directory 📖
 The columns that were used are: 
